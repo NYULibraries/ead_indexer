@@ -19,20 +19,20 @@ describe EadIndexer::Indexer do
     end
     context 'when file is passed in' do
       context 'and file is valid' do
-        let(:file) { File.join('spec','support','fixtures','fales','bloch.xml').to_s }
+        let(:file) { fixture_filepath('fales','bloch.xml') }
         it 'should index file' do
           expect(subject).to be true
         end
       end
       context 'and file is invalid' do
-        let(:file) { File.join('spec','support','fixtures','ead','nothing.xml').to_s }
+        let(:file) { fixture_filepath('ead','nothing.xml') }
         it 'should not index file' do
           expect(subject).to be false
         end
       end
     end
     context 'when file is a directory' do
-      let(:file) { File.join('spec','support','fixtures','tamwag').to_s }
+      let(:file) { fixture_filepath('tamwag') }
       it 'should index files in directory' do
         expect(subject).to be true
       end
@@ -46,12 +46,12 @@ describe EadIndexer::Indexer do
     }
     subject { indexer.send(:update_or_delete, status, file, message) }
     context 'when file exists' do
-      let(:file) { './spec/support/fixtures/fales/bytsura.xml' }
+      let(:file) { fixture_filepath('fales/bytsura.xml') }
       let(:status) { 'M' }
       it { is_expected.to be true }
     end
     context 'when file does not exist' do
-      let(:file) { './spec/support/fixtures/nothing_here' }
+      let(:file) { fixture_filepath('nothing_here') }
       context 'and status is Delete' do
         let(:status) { 'D' }
         it { is_expected.to be true }
@@ -110,7 +110,7 @@ describe EadIndexer::Indexer do
   end
 
   describe '#update' do
-    let(:file) { './spec/fixtures/fales/bytsura.xml' }
+    let(:file) { fixture_filepath('fales/bytsura.xml') }
     subject { indexer.send(:update, file) }
     before { allow_any_instance_of(SolrEad::Indexer).to receive(:update).and_return(true) }
     context 'when file is not passed in' do
@@ -129,7 +129,7 @@ describe EadIndexer::Indexer do
   end
 
   describe '#delete' do
-    let(:file) { './spec/fixtures/fales/bytsura.xml' }
+    let(:file) { fixture_filepath('fales/bytsura.xml') }
     let(:eadid) { 'bytsura' }
     subject { indexer.send(:delete, file, eadid) }
     context 'when file is not passed in' do
