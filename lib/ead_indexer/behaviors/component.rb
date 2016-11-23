@@ -38,7 +38,7 @@ module EadIndexer::Behaviors
 
     # Extract collection unit id from solr_doc
     # it was passed in via additional information from the collection level indexer
-    def collection_unitid(solr_doc, unitids = Array.new)
+    def collection_unitid(solr_doc, _unitids = Array.new)
       solr_doc[Solrizer.solr_name("collection_unitid", :displayable)]
     end
 

@@ -36,8 +36,8 @@ class EadIndexer::Indexer
       update(file)
     else
       updated_files = []
-      Dir.glob(File.join(file,"*")).each do |file|
-        updated_files << update(file)
+      Dir.glob(File.join(file,"*")).each do |dir_file|
+        updated_files << update(dir_file)
       end
       updated_files.all?
     end
@@ -107,7 +107,7 @@ private
   # Update or delete depending on git status
   def update_or_delete(status, file, message)
     eadid = get_eadid_from_message(file, message)
-    if File.exists?(file)
+    if File.exist?(file)
       update(file)
     # Status == D means the file was deleted
     elsif status.eql? "D"
@@ -134,7 +134,7 @@ private
       ENV["EAD"] = file
       indexer.update(file)
       log.info "Indexed #{file}."
-    rescue Exception => e
+    rescue StandardError => e
       log.info "Failed to index #{file}: #{e}."
       false
     end
@@ -152,7 +152,7 @@ private
     begin
       indexer.delete(id)
       log.info "Deleted #{file} with id #{id}."
-    rescue Exception => e
+    rescue StandardError => e
       log.info "Failed to delete #{file} with id #{id}: #{e}"
       false
     end
