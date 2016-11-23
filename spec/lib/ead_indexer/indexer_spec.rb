@@ -2,7 +2,7 @@ require 'rails_helper'
 
 describe EadIndexer::Indexer do
 
-  let(:indexer) { EadIndexer::Indexer.new('./spec/fixtures') }
+  let(:indexer) { EadIndexer::Indexer.new('./spec/support/fixtures') }
   let(:message) { "Deleting file tamwag/TAM.075-ead.xml EADID='tam_075', Deleting file tamwag/WAG.221-ead.xml EADID='wag_221'" }
 
   describe '.delete_all' do
