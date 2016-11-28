@@ -22,32 +22,32 @@ Configure a `config/solr.yml` in the client app with the `url` of the Solr insta
 Index/Reindex a single EAD or a whole directory:
 
 ```
-rake findingaids:ead:index EAD=findingaids_eads/archives/adler.xml
-rake findingaids:ead:index EAD=findingaids_eads/archives
+rake ead_indexer:index EAD=findingaids_eads/archives/adler.xml
+rake ead_indexer:index EAD=findingaids_eads/archives
 ```
 
 Reindex only the files in the data repository that have changed since the last commit:
 
 ```
-rake findingaids:ead:reindex_changed
+rake ead_indexer:reindex_changed
 ```
 
 Reindex only the files in the data repository that have changed since last week:
 
 ```
-rake findingaids:ead:reindex_changed_since_last_week
+rake ead_indexer:reindex_changed_since_last_week
 ```
 
 Reindex only the files in the data repository that have changed since yesterday:
 
 ```
-rake findingaids:ead:reindex_changed_since_yesterday
+rake ead_indexer:reindex_changed_since_yesterday
 ```
 
 Reindex only the files in the data repository that have changed since X days ago:
 
 ```
-rake findingaids:ead:reindex_changed_since_days_ago[days]
+rake ead_indexer:reindex_changed_since_days_ago[days]
 ```
 
 ### Delete from index
@@ -57,7 +57,7 @@ rake findingaids:ead:reindex_changed_since_days_ago[days]
 **Never do this in production***
 
 ```
-rake findingaids:ead:clean
+rake ead_indexer:clean
 ```
 
 To delete all records from the index do the following in the Rails console:
