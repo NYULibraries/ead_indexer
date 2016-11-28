@@ -18,14 +18,15 @@ describe EadIndexer::Indexer do
       end
     end
     context 'when file is passed in' do
+      let(:file) { fixture_filepath('fales','bloch.xml') }
       context 'and file is valid' do
-        let(:file) { fixture_filepath('fales','bloch.xml') }
+        before { expect(indexer.indexer).to receive(:update).with(file).and_return true }
         it 'should index file' do
           expect(subject).to be true
         end
       end
       context 'and file is invalid' do
-        let(:file) { fixture_filepath('ead','nothing.xml') }
+        before { expect(indexer.indexer).to receive(:update).with(file).and_raise Errno::ENOENT }
         it 'should not index file' do
           expect(subject).to be false
         end
@@ -34,16 +35,19 @@ describe EadIndexer::Indexer do
     context 'when file is a directory' do
       let(:file) { fixture_filepath('tamwag') }
       it 'should index files in directory' do
+        expect(indexer.indexer).to receive(:update).with(fixture_filepath('tamwag', 'OH.002-ead.xml')).and_return true
+        expect(indexer.indexer).to receive(:update).with(fixture_filepath('tamwag', 'photos_114.xml')).and_return true
+        expect(indexer.indexer).to receive(:update).with(fixture_filepath('tamwag', 'PHOTOS.107-ead.xml')).and_return true
         expect(subject).to be true
       end
     end
   end
 
   describe '#update_or_delete' do
-    before {
-      allow_any_instance_of(EadIndexer::Indexer).to receive(:update).and_return(true)
-      allow_any_instance_of(EadIndexer::Indexer).to receive(:delete).and_return(true)
-    }
+    before do
+      allow(indexer.indexer).to receive(:update).and_return(true)
+      allow(indexer.indexer).to receive(:delete).and_return(true)
+    end
     subject { indexer.send(:update_or_delete, status, file, message) }
     context 'when file exists' do
       let(:file) { fixture_filepath('fales/bytsura.xml') }
@@ -64,25 +68,19 @@ describe EadIndexer::Indexer do
   end
 
   describe '#reindex_changed_since_last_commit' do
-    before {
-      allow_any_instance_of(EadIndexer::Indexer).to receive(:reindex_changed).and_return(true)
-    }
+    before { allow(indexer).to receive(:reindex_changed).and_return(true) }
     subject { indexer.send(:reindex_changed_since_last_commit) }
     it { is_expected.to be true }
   end
 
   describe '#reindex_changed_since_yesterday' do
-    before {
-      allow_any_instance_of(EadIndexer::Indexer).to receive(:reindex_changed).and_return(true)
-    }
+    before { allow(indexer).to receive(:reindex_changed).and_return(true) }
     subject { indexer.send(:reindex_changed_since_yesterday) }
     it { is_expected.to be true }
   end
 
   describe '#reindex_changed_since_last_week' do
-    before {
-      allow_any_instance_of(EadIndexer::Indexer).to receive(:reindex_changed).and_return(true)
-    }
+    before { allow(indexer).to receive(:reindex_changed).and_return(true) }
     subject { indexer.send(:reindex_changed_since_last_week) }
     it { is_expected.to be true }
   end
@@ -102,9 +100,7 @@ describe EadIndexer::Indexer do
   end
 
   describe '#reindex_changed' do
-    before {
-      allow_any_instance_of(EadIndexer::Indexer).to receive(:update_or_delete).and_return(true)
-    }
+    before { allow(indexer).to receive(:update_or_delete).and_return(true) }
     subject { indexer.send(:reindex_changed, indexer.send(:commits)) }
     it { is_expected.to be true }
   end
@@ -133,14 +129,14 @@ describe EadIndexer::Indexer do
     let(:eadid) { 'bytsura' }
     subject { indexer.send(:delete, file, eadid) }
     context 'when file is not passed in' do
-      before { allow_any_instance_of(SolrEad::Indexer).to receive(:delete).and_return(true) }
+      before { allow(indexer.indexer).to receive(:delete).and_return(true) }
       let(:file) { nil }
       it 'should throw an argument error' do
         expect { subject }.to raise_error ArgumentError
       end
     end
     context 'when file is passed in' do
-      it { is_expected.to be true }
+      before { allow(indexer.indexer).to receive(:delete).and_return(true) }
       context 'and eadid is passed in' do
         it { is_expected.to be true }
       end
@@ -150,7 +146,7 @@ describe EadIndexer::Indexer do
       end
     end
     context 'when SolrEad::Indexer.delete fails' do
-      before { allow_any_instance_of(SolrEad::Indexer).to receive(:delete).and_raise(:ArgumentError) }
+      before { allow(indexer.indexer).to receive(:delete).and_raise(:ArgumentError) }
       it { is_expected.to be false }
     end
   end
