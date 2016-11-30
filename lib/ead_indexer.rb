@@ -6,6 +6,7 @@ require "ead_indexer/behaviors/dates"
 require "ead_indexer/behaviors/document"
 require "ead_indexer/behaviors"
 require "ead_indexer/component"
+require "ead_indexer/configuration"
 require "ead_indexer/document"
 require "ead_indexer/indexer"
 
@@ -15,5 +16,14 @@ module EadIndexer
   autoload :Behaviors
   autoload :Document
   autoload :Component
+  autoload :Configuration
   autoload :Indexer
+
+  def self.configuration
+    @configuration ||= Configuration.new
+  end
+
+  def self.configure
+    yield(self.configuration)
+  end
 end

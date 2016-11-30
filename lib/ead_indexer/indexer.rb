@@ -25,7 +25,7 @@ class EadIndexer::Indexer
 
   def initialize(data_path="findingaids_eads")
     @data_path = data_path
-    @indexer = SolrEad::Indexer.new(document: EadIndexer::Document, component: EadIndexer::Component)
+    @indexer = SolrEad::Indexer.new(document: EadIndexer.configuration.document_class, component: EadIndexer.configuration.component_class)
   end
 
   def index(file)

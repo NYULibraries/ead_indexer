@@ -76,7 +76,7 @@ You can override this customization in the client application by creating a clas
 class MyApp::Ead::Document < EadIndexer::Document
 ```
 
-To extend or modify the existing customization in `lib/ead_indexer/document.rb`, use a `extend_terminology` block:
+To extend (_not_ modify) the existing customization in `lib/ead_indexer/document.rb`, use a `extend_terminology` block:
 
 ```
 class MyApp::Ead::Document < EadIndexer::Document
@@ -88,6 +88,14 @@ end
 
 To define your own terminology from scratch, use a `set_terminology` block with the same syntax.
 
+To register this document with EadIndexer, you need to specify it in an initializer:
+
+```
+EadIndexer.configure do |config|
+  config.document_class = MyApp::Ead::Document
+end
+```
+
 See the [solr_ead](https://github.com/awead/solr_ead) documentation for more information on custom documents.
 
 ### Component indexing and searching
@@ -95,6 +103,14 @@ See the [solr_ead](https://github.com/awead/solr_ead) documentation for more inf
 EAD XML documents have separate components denoted by `<c>` elements, which if specified SolrEad indexes separately with a reference back to its parent EAD. Similarly to the custom `Document`, a custom `Component` can be defined and is defined by us at `lib/ead_indexer/component.rb`.
 
 Likewise, the client application can extend or modify the existing customization in a class that inherits from `EadIndexer::Component` by using the `extend_terminology` block as above (or the `set_terminology` block to define a new terminology from scratch).
+
+To register a custom component class with EadIndexer, you need to specify it in an initializer, e.g.:
+
+```
+EadIndexer.configure do |config|
+  config.component_class = MyApp::Ead::Component
+end
+```
 
 ### Locales
 
