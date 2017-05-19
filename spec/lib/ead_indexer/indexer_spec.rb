@@ -5,6 +5,10 @@ describe EadIndexer::Indexer do
   let(:indexer) { EadIndexer::Indexer.new('./spec/support/fixtures') }
   let(:message) { "Deleting file tamwag/TAM.075-ead.xml EADID='tam_075', Deleting file tamwag/WAG.221-ead.xml EADID='wag_221'" }
 
+  before do
+    allow_any_instance_of(EadIndexer::Indexer).to receive(:puts).and_return nil
+  end
+
   describe '.delete_all' do
     pending
   end
@@ -28,7 +32,7 @@ describe EadIndexer::Indexer do
       context 'and file is invalid' do
         before { expect(indexer.indexer).to receive(:update).with(file).and_raise Errno::ENOENT }
         it 'should not index file' do
-          expect(subject).to be false
+          expect{ subject }.to raise_error Errno::ENOENT
         end
       end
     end
@@ -119,8 +123,10 @@ describe EadIndexer::Indexer do
       it { is_expected.to be true }
     end
     context 'when SolrEad::Indexer.update fails' do
-      before { allow_any_instance_of(SolrEad::Indexer).to receive(:update).and_raise(:ArgumentError) }
-      it { is_expected.to be false }
+      before { allow_any_instance_of(SolrEad::Indexer).to receive(:update).and_raise ArgumentError.new }
+      it "should raise error" do
+        expect{ subject }.to raise_error ArgumentError
+      end
     end
   end
 
@@ -146,8 +152,10 @@ describe EadIndexer::Indexer do
       end
     end
     context 'when SolrEad::Indexer.delete fails' do
-      before { allow(indexer.indexer).to receive(:delete).and_raise(:ArgumentError) }
-      it { is_expected.to be false }
+      before { allow(indexer.indexer).to receive(:delete).and_raise ArgumentError.new }
+      it "should raise error" do
+        expect{ subject }.to raise_error ArgumentError
+      end
     end
   end
 
