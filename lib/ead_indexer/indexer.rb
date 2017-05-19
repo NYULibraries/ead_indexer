@@ -137,7 +137,7 @@ private
     rescue StandardError => e
       log.info "Failed to index #{file}: #{e}."
       puts "Failed to index #{file}: #{e}."
-      false
+      raise e
     end
   end
 
@@ -156,7 +156,7 @@ private
     rescue StandardError => e
       log.info "Failed to delete #{file} with id #{id}: #{e}"
       puts "Failed to delete #{file} with id #{id}: #{e}"
-      false
+      raise e
     end
   end
 
