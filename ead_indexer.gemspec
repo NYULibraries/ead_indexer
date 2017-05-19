@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "rails", ">= 4.2.7.1"
   s.add_dependency 'solr_ead', '>= 0.7.2'
+  s.add_dependency 'rsolr', '~> 1.0'
   s.add_dependency 'iso-639', '>= 0.2.5'
 
   s.add_development_dependency 'pry'
