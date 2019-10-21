@@ -138,6 +138,7 @@ private
       ENV["EAD"] = file
       indexer.update(file)
       log.info "Indexed #{file}."
+      puts "Indexed #{file}."
     rescue StandardError => e
       log.info "Failed to index #{file}: #{e}."
       puts "Failed to index #{file}: #{e}."
