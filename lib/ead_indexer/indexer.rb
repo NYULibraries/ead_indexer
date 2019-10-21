@@ -89,6 +89,8 @@ private
   #               default is -1, just the last commit
   def commits(time_range = '-1')
     @commits ||= `cd #{data_path} && git log --pretty=format:'%h' #{time_range} && cd ..`.split("\n")
+    puts "Commits to scan: #{@commits}"
+    @commits
   end
 
   # Get list of files changed since last commit
@@ -96,7 +98,9 @@ private
     changed_files = []
     last_commits.each do |commit|
       files_in_commit = (`cd #{data_path} && git diff-tree --no-commit-id --name-status -r #{commit} && cd ..`).split("\n")
+      puts "Files in commit #{commit}: #{files_in_commit}"
       commit_message = (`cd #{data_path} && git log --pretty=format:'%s' -1 -c #{commit} && cd ..`).gsub(/(\n+)$/,'')
+      puts "Commit message for commit #{commit}: #{commit_message}"
       files_in_commit.each do |changed_file|
         changed_files << [changed_file, commit_message].join("\t")
       end
