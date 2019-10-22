@@ -1,3 +1,4 @@
+require "rake"
 require "solr_ead"
 require 'iso-639'
 require "ead_indexer/engine"
