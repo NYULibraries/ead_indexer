@@ -75,7 +75,7 @@ private
       fullpath = File.join(data_path, filename)
       updated_files << update_or_delete(status, fullpath, message)
       # sleep for rate limiting https://docs.websolr.com/article/178-http-429-too-many-requests
-      sleep 1
+      sleep ENV['FINDINGAIDS_RAKE_INDEX_SLEEP_INTERVAL'].to_i if ENV['FINDINGAIDS_RAKE_INDEX_SLEEP_INTERVAL']
     end
     # Return true is all the files were sucessfully updated
     # or if there were no files
