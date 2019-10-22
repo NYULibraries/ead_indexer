@@ -17,11 +17,12 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["spec/**/**/**/**/*"]
 
-  s.add_dependency "rails", ">= 4.2.7.1"
-  s.add_dependency 'solr_ead', '>= 0.7.2'
+  s.add_dependency "rails", ">= 4.2.7.1", "< 6"
+  s.add_dependency 'solr_ead', '~> 0.7.5'
   s.add_dependency 'rsolr', '~> 1.0'
   s.add_dependency 'iso-639', '>= 0.2.5'
 
+  s.add_development_dependency 'rake'
   s.add_development_dependency 'pry'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rspec-rails'
