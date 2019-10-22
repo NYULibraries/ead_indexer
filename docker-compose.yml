@@ -1,0 +1,14 @@
+version: '3.6'
+
+services:
+
+  test:
+    image: ead_indexer_test
+    build: .
+    environment:
+      RAILS_ENV: test
+
+  setup_dbs:
+    image: ead_indexer_test
+    build: .
+    command: ["/tmp/wait-for-it.sh", "db:3306", "--", "rake", "db:setup"]
