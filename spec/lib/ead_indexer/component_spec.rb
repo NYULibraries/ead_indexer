@@ -87,7 +87,7 @@ describe EadIndexer::Component do
         Solrizer.solr_name("parent", :stored_sortable)              => "ref001",
         Solrizer.solr_name("parent", :displayable)                  => ["ref001", "ref002", "ref003"],
         Solrizer.solr_name("parent_unittitles", :displayable)       => ["Series I", "Subseries A", "Subseries 1"],
-        Solrizer.solr_name("component_children", :type => :boolean) => FALSE,
+        Solrizer.solr_name("component_children", :type => :boolean) => false,
         Solrizer.solr_name("collection", :facetable)                => ["Resource--Title-AT"],
         Solrizer.solr_name("collection_unitid", :displayable)       => ["Resource.ID.AT.AT"],
         Solrizer.solr_name("author", :searchable)                   => ["Finding aid prepared by Resource-FindingAidAuthor-AT"]
