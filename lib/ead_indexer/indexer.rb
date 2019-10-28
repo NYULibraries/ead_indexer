@@ -74,6 +74,8 @@ private
       status, filename, message = file.split("\t")
       fullpath = File.join(data_path, filename)
       updated_files << update_or_delete(status, fullpath, message)
+      # sleep for rate limiting https://docs.websolr.com/article/178-http-429-too-many-requests
+      sleep ENV['FINDINGAIDS_RAKE_INDEX_SLEEP_INTERVAL'].to_i if ENV['FINDINGAIDS_RAKE_INDEX_SLEEP_INTERVAL']
     end
     # Return true is all the files were sucessfully updated
     # or if there were no files
@@ -107,6 +109,7 @@ private
   # Update or delete depending on git status
   def update_or_delete(status, file, message)
     eadid = get_eadid_from_message(file, message)
+    # Only reindex for XML files
     if File.exist?(file)
       update(file)
     # Status == D means the file was deleted
@@ -128,16 +131,22 @@ private
     if file.blank?
       raise ArgumentError.new("Expecting #{file} to be a file or directory")
     end
-    begin
-      # The document is built around a repository that relies on the folder structure
-      # since it does not exist consistently in the EAD, so we pass in the full path to extract the repos.
-      ENV["EAD"] = file
-      indexer.update(file)
-      log.info "Indexed #{file}."
-    rescue StandardError => e
-      log.info "Failed to index #{file}: #{e}."
-      puts "Failed to index #{file}: #{e}."
-      raise e
+    if /\.xml$/.match(file).present?
+      begin
+        # The document is built around a repository that relies on the folder structure
+        # since it does not exist consistently in the EAD, so we pass in the full path to extract the repos.
+        ENV["EAD"] = file
+        indexer.update(file)
+        puts "Indexed #{file}."
+        log.info "Indexed #{file}."
+      rescue StandardError => e
+        log.info "Failed to index #{file}: #{e}."
+        puts "Failed to index #{file}: #{e}."
+        raise e
+      end
+    else
+      log.info "Failed to index #{file}: not an XML file."
+      puts "Failed to index #{file}: not an XML file."
     end
   end
 
@@ -147,16 +156,22 @@ private
     if file.blank?
       raise ArgumentError.new("Expecting #{file} to be a file or directory")
     end
-    # If eadid was passed in, use it to delete
-    # it not, make a guess based on filename
-    id = (eadid || File.basename(file).split("\.")[0])
-    begin
-      indexer.delete(id)
-      log.info "Deleted #{file} with id #{id}."
-    rescue StandardError => e
-      log.info "Failed to delete #{file} with id #{id}: #{e}"
-      puts "Failed to delete #{file} with id #{id}: #{e}"
-      raise e
+    if /\.xml$/.match(file).present?
+      # If eadid was passed in, use it to delete
+      # it not, make a guess based on filename
+      id = (eadid || File.basename(file).split("\.")[0])
+      begin
+        indexer.delete(id)
+        puts "Deleted #{file} with id #{id}."
+        log.info "Deleted #{file} with id #{id}."
+      rescue StandardError => e
+        log.info "Failed to delete #{file} with id #{id}: #{e}"
+        puts "Failed to delete #{file} with id #{id}: #{e}"
+        raise e
+      end
+    else
+      log.info "Failed to index #{file}: not an XML file."
+      puts "Failed to index #{file}: not an XML file."
     end
   end
 

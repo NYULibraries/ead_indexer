@@ -29,6 +29,12 @@ describe EadIndexer::Indexer do
           expect(subject).to be true
         end
       end
+      context 'and file is not an XML file' do
+        let(:file) { fixture_filepath('test.yml') }
+        it 'should not index file' do
+          expect(subject).to be_nil
+        end
+      end
       context 'and file is invalid' do
         before { expect(indexer.indexer).to receive(:update).with(file).and_raise Errno::ENOENT }
         it 'should not index file' do
@@ -62,7 +68,7 @@ describe EadIndexer::Indexer do
       let(:file) { fixture_filepath('nothing_here') }
       context 'and status is Delete' do
         let(:status) { 'D' }
-        it { is_expected.to be true }
+        it { is_expected.to be_nil }
       end
       context 'and status IS NOT Delete' do
         let(:status) { 'M' }

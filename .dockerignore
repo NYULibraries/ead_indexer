@@ -1,3 +1,7 @@
+.circleci/
+Dockerfile
+docker-compose.yml
+
 .bundle/
 Gemfile.lock
 log/*.log
