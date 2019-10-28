@@ -138,6 +138,7 @@ private
         ENV["EAD"] = file
         indexer.update(file)
         log.info "Indexed #{file}."
+        puts "Indexed #{file}."
       rescue StandardError => e
         log.info "Failed to index #{file}: #{e}."
         puts "Failed to index #{file}: #{e}."
@@ -162,6 +163,7 @@ private
       begin
         indexer.delete(id)
         log.info "Deleted #{file} with id #{id}."
+        puts "Deleted #{file} with id #{id}."
       rescue StandardError => e
         log.info "Failed to delete #{file} with id #{id}: #{e}"
         puts "Failed to delete #{file} with id #{id}: #{e}"
