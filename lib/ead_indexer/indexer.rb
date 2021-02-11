@@ -77,6 +77,10 @@ private
       # sleep for rate limiting https://docs.websolr.com/article/178-http-429-too-many-requests
       sleep ENV['FINDINGAIDS_RAKE_INDEX_SLEEP_INTERVAL'].to_i if ENV['FINDINGAIDS_RAKE_INDEX_SLEEP_INTERVAL']
     end
+    if updated_files.empty?
+      log.info "No files to index."
+      puts "No files to index."
+    end
     # Return true is all the files were sucessfully updated
     # or if there were no files
     (updated_files.all? || updated_files.empty?)
