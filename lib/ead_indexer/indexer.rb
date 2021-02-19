@@ -148,17 +148,17 @@ private
         indexer.update(file)
         puts "Indexed #{file}."
         log.info "Indexed #{file}."
-        prom_success_counter.increment(labels: { ead: file, action: 'update' })
+        prom_success_counter.increment(labels: { action: 'update', job: 'specialcollections' })
       rescue StandardError => e
         log.info "Failed to index #{file}: #{e}."
         puts "Failed to index #{file}: #{e}."
-        prom_failure_counter.increment(labels: { ead: file, action: 'update' })
+        prom_failure_counter.increment(labels: { ead: file, action: 'update', job: 'specialcollections' })
         raise e
       end
     else
       log.info "Failed to index #{file}: not an XML file."
       puts "Failed to index #{file}: not an XML file."
-      prom_failure_counter.increment(labels: { ead: file, action: 'update' })
+      prom_failure_counter.increment(labels: { ead: file, action: 'update', job: 'specialcollections' })
     end
   end
 
@@ -176,17 +176,17 @@ private
         indexer.delete(id)
         puts "Deleted #{file} with id #{id}."
         log.info "Deleted #{file} with id #{id}."
-        prom_success_counter.increment(labels: { ead: file, action: 'delete'})
+        prom_success_counter.increment(labels: { action: 'delete', job: 'specialcollections' })
       rescue StandardError => e
         log.info "Failed to delete #{file} with id #{id}: #{e}"
         puts "Failed to delete #{file} with id #{id}: #{e}"
-        prom_failure_counter.increment(labels: { ead: file, action: 'delete' })
+        prom_failure_counter.increment(labels: { ead: file, action: 'delete', job: 'specialcollections' })
         raise e
       end
     else
       log.info "Failed to index #{file}: not an XML file."
       puts "Failed to index #{file}: not an XML file."
-      prom_failure_counter.increment(labels: { ead: file, action: 'delete' })
+      prom_failure_counter.increment(labels: { ead: file, action: 'delete', job: 'specialcollections' })
     end
   end
 
@@ -209,11 +209,11 @@ private
   end
 
   def prom_success_counter
-    @prom_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_success_total, docstring: 'docstring', labels: [:action])
+    @prom_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_success_total, docstring: 'docstring', labels: [:action, :job])
   end
 
   def prom_failure_counter
-    @prom_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_failure_total, docstring: 'docstring', labels: [:action, :ead])
+    @prom_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_failure_total, docstring: 'docstring', labels: [:action, :ead, :job])
   end
 
 end
