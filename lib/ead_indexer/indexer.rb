@@ -148,17 +148,17 @@ private
         indexer.update(file)
         puts "Indexed #{file}."
         log.info "Indexed #{file}."
-        prom_update_success_counter.increment(labels: { ead: file })
+        prom_success_counter.increment(labels: { ead: file, action: 'update' })
       rescue StandardError => e
         log.info "Failed to index #{file}: #{e}."
         puts "Failed to index #{file}: #{e}."
-        prom_update_failure_counter.increment(labels: { ead: file })
+        prom_failure_counter.increment(labels: { ead: file, action: 'update' })
         raise e
       end
     else
       log.info "Failed to index #{file}: not an XML file."
       puts "Failed to index #{file}: not an XML file."
-      prom_update_failure_counter.increment(labels: { ead: file })
+      prom_failure_counter.increment(labels: { ead: file, action: 'update' })
     end
   end
 
@@ -176,17 +176,17 @@ private
         indexer.delete(id)
         puts "Deleted #{file} with id #{id}."
         log.info "Deleted #{file} with id #{id}."
-        prom_delete_success_counter.increment(labels: { ead: file })
+        prom_success_counter.increment(labels: { ead: file, action: 'delete'})
       rescue StandardError => e
         log.info "Failed to delete #{file} with id #{id}: #{e}"
         puts "Failed to delete #{file} with id #{id}: #{e}"
-        prom_delete_failure_counter.increment(labels: { ead: file })
+        prom_failure_counter.increment(labels: { ead: file, action: 'delete' })
         raise e
       end
     else
       log.info "Failed to index #{file}: not an XML file."
       puts "Failed to index #{file}: not an XML file."
-      prom_delete_failure_counter.increment(labels: { ead: file })
+      prom_failure_counter.increment(labels: { ead: file, action: 'delete' })
     end
   end
 
@@ -196,7 +196,7 @@ private
   end
 
   def prom_push_trigger
-    Prometheus::Client::Push.new('specialcollection-index', 'git-trigger', ENV['PROM_PUSHGATEWAY_URL']).add(prom_registry)
+    Prometheus::Client::Push.new('specialcollections', 'index-git-trigger', ENV['PROM_PUSHGATEWAY_URL']).add(prom_registry)
   end
 
   def prom_registry
@@ -204,26 +204,16 @@ private
   end
 
   def prom_register_metrics
-    prom_registry.register(prom_update_success_counter)
-    prom_registry.register(prom_update_failure_counter)
-    prom_registry.register(prom_delete_success_counter)
-    prom_registry.register(prom_delete_failure_counter)
+    prom_registry.register(prom_success_counter)
+    prom_registry.register(prom_failure_counter)
   end
 
-  def prom_update_success_counter
-    @prom_update_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_update_success_total, docstring: 'test')
+  def prom_success_counter
+    @prom_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_success_total, docstring: 'docstring', labels: [:action])
   end
 
-  def prom_update_failure_counter
-    @prom_update_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_update_failure_total, docstring: 'test', labels: [:ead])
+  def prom_failure_counter
+    @prom_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_failure_total, docstring: 'docstring', labels: [:action, :ead])
   end
 
-  def prom_delete_success_counter
-    @prom_delete_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_delete_success_total, docstring: 'test')
-  end
-
-  def prom_delete_failure_counter
-    @prom_delete_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_delete_failure_total, docstring: 'test', labels: [:ead])
-  end
-  
 end
