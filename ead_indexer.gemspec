@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'solr_ead', '~> 0.7.5'
   s.add_dependency 'rsolr', '~> 1.0'
   s.add_dependency 'iso-639', '>= 0.2.5'
+  s.add_dependency 'prometheus-client', '>= 2.1.0'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'pry'

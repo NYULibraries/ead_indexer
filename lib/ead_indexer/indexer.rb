@@ -1,3 +1,6 @@
+require 'prometheus/client'
+require 'prometheus/client/push'
+
 require 'solr_ead'
 require 'fileutils'
 ##
@@ -45,7 +48,9 @@ class EadIndexer::Indexer
 
   # Reindex files changed only since the last commit
   def reindex_changed_since_last_commit
+    prom_register_metrics
     reindex_changed(commits)
+    prom_push_trigger
   end
 
   # Reindex all files changed in the last day
@@ -143,14 +148,17 @@ private
         indexer.update(file)
         puts "Indexed #{file}."
         log.info "Indexed #{file}."
+        prom_update_success_counter.increment(labels: { ead: file })
       rescue StandardError => e
         log.info "Failed to index #{file}: #{e}."
         puts "Failed to index #{file}: #{e}."
+        prom_update_failure_counter.increment(labels: { ead: file })
         raise e
       end
     else
       log.info "Failed to index #{file}: not an XML file."
       puts "Failed to index #{file}: not an XML file."
+      prom_update_failure_counter.increment(labels: { ead: file })
     end
   end
 
@@ -168,14 +176,17 @@ private
         indexer.delete(id)
         puts "Deleted #{file} with id #{id}."
         log.info "Deleted #{file} with id #{id}."
+        prom_delete_success_counter.increment(labels: { ead: file })
       rescue StandardError => e
         log.info "Failed to delete #{file} with id #{id}: #{e}"
         puts "Failed to delete #{file} with id #{id}: #{e}"
+        prom_delete_failure_counter.increment(labels: { ead: file })
         raise e
       end
     else
       log.info "Failed to index #{file}: not an XML file."
       puts "Failed to index #{file}: not an XML file."
+      prom_delete_failure_counter.increment(labels: { ead: file })
     end
   end
 
@@ -183,4 +194,36 @@ private
   def log
     @log ||= (ENV['FINDINGAIDS_LOG']) ? Logger.new(ENV['FINDINGAIDS_LOG'].constantize) : Rails.logger
   end
+
+  def prom_push_trigger
+    Prometheus::Client::Push.new('specialcollection-index', 'git-trigger', ENV['PROM_PUSHGATEWAY_URL']).add(prom_registry)
+  end
+
+  def prom_registry
+    @prom_registry ||= Prometheus::Client.registry
+  end
+
+  def prom_register_metrics
+    prom_registry.register(prom_update_success_counter)
+    prom_registry.register(prom_update_failure_counter)
+    prom_registry.register(prom_delete_success_counter)
+    prom_registry.register(prom_delete_failure_counter)
+  end
+
+  def prom_update_success_counter
+    @prom_update_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_update_success_total, docstring: 'test')
+  end
+
+  def prom_update_failure_counter
+    @prom_update_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_update_failure_total, docstring: 'test', labels: [:ead])
+  end
+
+  def prom_delete_success_counter
+    @prom_delete_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_delete_success_total, docstring: 'test')
+  end
+
+  def prom_delete_failure_counter
+    @prom_delete_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_delete_failure_total, docstring: 'test', labels: [:ead])
+  end
+  
 end
