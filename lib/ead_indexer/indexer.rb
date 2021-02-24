@@ -207,7 +207,7 @@ private
   end
 
   def init_prom_metrics(cronjob)
-    EadIndexer::PromMetrics.new(app_name: 'specialcollections', cronjob: cronjob) if ENV['PROM_PUSHGATEWAY_URL']
+    EadIndexer::PromMetrics.new('specialcollections', cronjob) if ENV['PROM_PUSHGATEWAY_URL']
   end
 
 end
