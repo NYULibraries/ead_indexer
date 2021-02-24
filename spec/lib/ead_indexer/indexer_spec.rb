@@ -32,7 +32,7 @@ describe EadIndexer::Indexer do
       context 'and file is not an XML file' do
         let(:file) { fixture_filepath('test.yml') }
         it 'should not index file' do
-          expect(subject).to be_nil
+          expect(subject).to be false
         end
       end
       context 'and file is invalid' do
@@ -68,7 +68,7 @@ describe EadIndexer::Indexer do
       let(:file) { fixture_filepath('nothing_here') }
       context 'and status is Delete' do
         let(:status) { 'D' }
-        it { is_expected.to be_nil }
+        it { is_expected.to be false }
       end
       context 'and status IS NOT Delete' do
         let(:status) { 'M' }
@@ -200,6 +200,20 @@ describe EadIndexer::Indexer do
      let(:message) { "Deleting file tamwag/WAG.221-ead.xml EADID='wag_221'" }
      it { is_expected.to eql 'wag_221' }
    end
+ end
+
+ describe '#record_success' do
+  let(:msg) { '' }
+  let(:labels) { {} }
+  subject { indexer.send(:record_success, msg, labels) }
+  it { is_expected.to be true }
+ end
+
+ describe '#record_failure' do
+  let(:msg) { '' }
+  let(:labels) { {} }
+  subject { indexer.send(:record_failure, msg, labels) }
+  it { is_expected.to be false }
  end
 
 end

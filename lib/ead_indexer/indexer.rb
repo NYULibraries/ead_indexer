@@ -24,11 +24,12 @@ class EadIndexer::Indexer
     end
   end
 
-  attr_accessor :indexer, :data_path
+  attr_accessor :indexer, :data_path, :prom_metrics
 
   def initialize(data_path="findingaids_eads")
     @data_path = data_path
     @indexer = SolrEad::Indexer.new(document: EadIndexer.configuration.document_class, component: EadIndexer.configuration.component_class)
+    @prom_metrics = init_prom_metrics('git-trigger')
   end
 
   def index(file)
@@ -48,18 +49,24 @@ class EadIndexer::Indexer
 
   # Reindex files changed only since the last commit
   def reindex_changed_since_last_commit
-    prom_register_metrics
-    reindex_changed(commits)
-    prom_push_trigger
+    @prom_metrics = init_prom_metrics('git-trigger')
+    prom_metrics&.register_metrics!
+    begin
+      reindex_changed(commits)
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed in the last day
   def reindex_changed_since_yesterday
+    @prom_metrics = init_prom_metrics('nightly')
     reindex_changed(commits('--since=1.day'))
   end
 
   # Reindex all files changed in the last week
   def reindex_changed_since_last_week
+    @prom_metrics = init_prom_metrics('weekly')
     reindex_changed(commits('--since=1.week'))
   end
 
@@ -146,19 +153,13 @@ private
         # since it does not exist consistently in the EAD, so we pass in the full path to extract the repos.
         ENV["EAD"] = file
         indexer.update(file)
-        puts "Indexed #{file}."
-        log.info "Indexed #{file}."
-        prom_success_counter.increment(labels: { action: 'update', app: 'specialcollections' })
+        record_success("Indexed #{file}.", { action: 'update' })
       rescue StandardError => e
-        log.info "Failed to index #{file}: #{e}."
-        puts "Failed to index #{file}: #{e}."
-        prom_failure_counter.increment(labels: { ead: file, action: 'update', app: 'specialcollections' })
+        record_failure("Failed to index #{file}: #{e}.", { action: 'update', ead: file })
         raise e
       end
     else
-      log.info "Failed to index #{file}: not an XML file."
-      puts "Failed to index #{file}: not an XML file."
-      prom_failure_counter.increment(labels: { ead: file, action: 'update', app: 'specialcollections' })
+      record_failure("Failed to index #{file}: not an XML file.", { action: 'update', ead: file })
     end
   end
 
@@ -174,19 +175,13 @@ private
       id = (eadid || File.basename(file).split("\.")[0])
       begin
         indexer.delete(id)
-        puts "Deleted #{file} with id #{id}."
-        log.info "Deleted #{file} with id #{id}."
-        prom_success_counter.increment(labels: { action: 'delete', app: 'specialcollections' })
+        record_success("Deleted #{file} with id #{id}.", { action: 'delete' })
       rescue StandardError => e
-        log.info "Failed to delete #{file} with id #{id}: #{e}"
-        puts "Failed to delete #{file} with id #{id}: #{e}"
-        prom_failure_counter.increment(labels: { ead: file, action: 'delete', app: 'specialcollections' })
+        record_failure("Failed to delete #{file} with id #{id}: #{e}", { action: 'delete', ead: file })
         raise e
       end
     else
-      log.info "Failed to index #{file}: not an XML file."
-      puts "Failed to index #{file}: not an XML file."
-      prom_failure_counter.increment(labels: { ead: file, action: 'delete', app: 'specialcollections' })
+      record_failure("Failed to delete #{file}: not an XML file.", { action: 'delete', ead: file })
     end
   end
 
@@ -195,25 +190,24 @@ private
     @log ||= (ENV['FINDINGAIDS_LOG']) ? Logger.new(ENV['FINDINGAIDS_LOG'].constantize) : Rails.logger
   end
 
-  def prom_push_trigger
-    Prometheus::Client::Push.new('specialcollections', 'index-git-trigger', ENV['PROM_PUSHGATEWAY_URL']).add(prom_registry)
+  def record_success(msg, labels={})
+    metric_labels = prom_metrics&.default_labels&.merge(labels)
+    puts "#{msg}"
+    log.info "#{msg}."
+    prom_metrics&.success_counter&.increment(labels: metric_labels)
+    true
   end
 
-  def prom_registry
-    @prom_registry ||= Prometheus::Client.registry
+  def record_failure(msg, labels={})
+    metric_labels = prom_metrics&.default_labels&.merge(labels)
+    puts "#{msg}"
+    log.info "#{msg}."
+    prom_metrics&.failure_counter&.increment(labels: metric_labels)
+    false
   end
 
-  def prom_register_metrics
-    prom_registry.register(prom_success_counter)
-    prom_registry.register(prom_failure_counter)
-  end
-
-  def prom_success_counter
-    @prom_success_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_success_total, docstring: 'docstring', labels: [:action, :app])
-  end
-
-  def prom_failure_counter
-    @prom_failure_counter ||= Prometheus::Client::Counter.new(:nyulibraries_web_cron_failure_total, docstring: 'docstring', labels: [:action, :ead, :app])
+  def init_prom_metrics(cronjob)
+    EadIndexer::PromMetrics.new(app_name: 'specialcollections', cronjob: cronjob) if ENV['PROM_PUSHGATEWAY_URL']
   end
 
 end
