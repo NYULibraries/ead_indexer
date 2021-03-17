@@ -61,20 +61,33 @@ class EadIndexer::Indexer
   # Reindex all files changed in the last day
   def reindex_changed_since_yesterday
     @prom_metrics = init_prom_metrics('nightly')
-    reindex_changed(commits('--since=1.day'))
+    begin
+      reindex_changed(commits('--since=1.day'))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed in the last week
   def reindex_changed_since_last_week
     @prom_metrics = init_prom_metrics('weekly')
-    reindex_changed(commits('--since=1.week'))
+    begin
+      reindex_changed(commits('--since=1.week'))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed since x days ago
   def reindex_changed_since_days_ago(days_ago)
+    @prom_metrics = init_prom_metrics('x-days')
     # assert that argument can be converted to an integer
     days = Integer(days_ago)
-    reindex_changed(commits("--since=#{days}.day"))
+    begin
+      reindex_changed(commits("--since=#{days}.day"))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
 private
