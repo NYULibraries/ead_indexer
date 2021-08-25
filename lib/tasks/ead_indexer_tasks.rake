@@ -15,6 +15,12 @@ namespace :ead_indexer do
     indexer.reindex_changed_since_last_commit
   end
 
+  desc "Reindex only the files in the data repository that have changed since last hour"
+  task :reindex_changed_since_last_hour => :environment do
+    indexer = EadIndexer::Indexer.new
+    indexer.reindex_changed_since_last_hour
+  end
+
   desc "Reindex only the files in the data repository that have changed since yesterday"
   task :reindex_changed_since_yesterday => :environment do
     indexer = EadIndexer::Indexer.new
