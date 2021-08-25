@@ -10,6 +10,7 @@ require "ead_indexer/component"
 require "ead_indexer/configuration"
 require "ead_indexer/document"
 require "ead_indexer/indexer"
+require "ead_indexer/prom_metrics"
 
 module EadIndexer
   extend ActiveSupport::Autoload
@@ -19,6 +20,7 @@ module EadIndexer
   autoload :Component
   autoload :Configuration
   autoload :Indexer
+  autoload :PromMetrics
 
   def self.configuration
     @configuration ||= Configuration.new

@@ -1,3 +1,6 @@
+require 'prometheus/client'
+require 'prometheus/client/push'
+
 require 'solr_ead'
 require 'fileutils'
 ##
@@ -21,11 +24,12 @@ class EadIndexer::Indexer
     end
   end
 
-  attr_accessor :indexer, :data_path
+  attr_accessor :indexer, :data_path, :prom_metrics
 
   def initialize(data_path="findingaids_eads")
     @data_path = data_path
     @indexer = SolrEad::Indexer.new(document: EadIndexer.configuration.document_class, component: EadIndexer.configuration.component_class)
+    @prom_metrics = init_prom_metrics('git-trigger')
   end
 
   def index(file)
@@ -45,7 +49,13 @@ class EadIndexer::Indexer
 
   # Reindex files changed only since the last commit
   def reindex_changed_since_last_commit
-    reindex_changed(commits)
+    @prom_metrics = init_prom_metrics('git-trigger')
+    prom_metrics&.register_metrics!
+    begin
+      reindex_changed(commits)
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed in the last week
@@ -55,19 +65,34 @@ class EadIndexer::Indexer
 
   # Reindex all files changed in the last day
   def reindex_changed_since_yesterday
-    reindex_changed(commits('--since=1.day'))
+    @prom_metrics = init_prom_metrics('nightly')
+    begin
+      reindex_changed(commits('--since=1.day'))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed in the last week
   def reindex_changed_since_last_week
-    reindex_changed(commits('--since=1.week'))
+    @prom_metrics = init_prom_metrics('weekly')
+    begin
+      reindex_changed(commits('--since=1.week'))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed since x days ago
   def reindex_changed_since_days_ago(days_ago)
+    @prom_metrics = init_prom_metrics('x-days')
     # assert that argument can be converted to an integer
     days = Integer(days_ago)
-    reindex_changed(commits("--since=#{days}.day"))
+    begin
+      reindex_changed(commits("--since=#{days}.day"))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
 private
@@ -146,16 +171,13 @@ private
         # since it does not exist consistently in the EAD, so we pass in the full path to extract the repos.
         ENV["EAD"] = file
         indexer.update(file)
-        puts "Indexed #{file}."
-        log.info "Indexed #{file}."
+        record_success("Indexed #{file}.", { action: 'update' })
       rescue StandardError => e
-        log.info "Failed to index #{file}: #{e}."
-        puts "Failed to index #{file}: #{e}."
+        record_failure("Failed to index #{file}: #{e}.", { action: 'update', ead: file })
         raise e
       end
     else
-      log.info "Failed to index #{file}: not an XML file."
-      puts "Failed to index #{file}: not an XML file."
+      record_failure("Failed to index #{file}: not an XML file.", { action: 'update', ead: file })
     end
   end
 
@@ -171,16 +193,13 @@ private
       id = (eadid || File.basename(file).split("\.")[0])
       begin
         indexer.delete(id)
-        puts "Deleted #{file} with id #{id}."
-        log.info "Deleted #{file} with id #{id}."
+        record_success("Deleted #{file} with id #{id}.", { action: 'delete' })
       rescue StandardError => e
-        log.info "Failed to delete #{file} with id #{id}: #{e}"
-        puts "Failed to delete #{file} with id #{id}: #{e}"
+        record_failure("Failed to delete #{file} with id #{id}: #{e}", { action: 'delete', ead: file })
         raise e
       end
     else
-      log.info "Failed to index #{file}: not an XML file."
-      puts "Failed to index #{file}: not an XML file."
+      record_failure("Failed to delete #{file}: not an XML file.", { action: 'delete', ead: file })
     end
   end
 
@@ -188,4 +207,25 @@ private
   def log
     @log ||= (ENV['FINDINGAIDS_LOG']) ? Logger.new(ENV['FINDINGAIDS_LOG'].constantize) : Rails.logger
   end
+
+  def record_success(msg, labels={})
+    metric_labels = prom_metrics&.default_labels&.merge(labels)
+    puts "#{msg}"
+    log.info "#{msg}."
+    prom_metrics&.success_counter&.increment(labels: metric_labels)
+    true
+  end
+
+  def record_failure(msg, labels={})
+    metric_labels = prom_metrics&.default_labels&.merge(labels)
+    puts "#{msg}"
+    log.info "#{msg}."
+    prom_metrics&.failure_counter&.increment(labels: metric_labels)
+    false
+  end
+
+  def init_prom_metrics(cronjob)
+    EadIndexer::PromMetrics.new('specialcollections', cronjob) if ENV['PROM_PUSHGATEWAY_URL']
+  end
+
 end
