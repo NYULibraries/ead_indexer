@@ -48,6 +48,11 @@ class EadIndexer::Indexer
     reindex_changed(commits)
   end
 
+  # Reindex all files changed in the last week
+  def reindex_changed_since_last_hour
+    reindex_changed(commits('--since=1.hour'))
+  end
+
   # Reindex all files changed in the last day
   def reindex_changed_since_yesterday
     reindex_changed(commits('--since=1.day'))
