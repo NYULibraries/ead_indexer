@@ -60,7 +60,13 @@ class EadIndexer::Indexer
 
   # Reindex all files changed in the last week
   def reindex_changed_since_last_hour
-    reindex_changed(commits('--since=1.hour'))
+    @prom_metrics = init_prom_metrics('hourly')
+    prom_metrics&.register_metrics!
+    begin
+      reindex_changed(commits('--since=1.hour'))
+    ensure
+      prom_metrics&.push_metrics!
+    end
   end
 
   # Reindex all files changed in the last day
