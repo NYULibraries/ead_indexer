@@ -17,7 +17,7 @@ test: &test
 
 version: 2
 jobs:
-  test-and-build-image:
+  test-image:
     <<: *docker-defaults
     steps:
       - checkout
@@ -30,4 +30,4 @@ workflows:
   version: 2
   test:
     jobs:
-      - test
+      - test-image
