@@ -3,7 +3,6 @@ Dockerfile
 docker-compose.yml
 
 .bundle/
-Gemfile.lock
 log/*.log
 pkg/
 spec/dummy/db/*.sqlite3
