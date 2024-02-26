@@ -1,0 +1,33 @@
+docker-defaults: &docker-defaults
+  docker:
+    - image: quay.io/nyulibraries/circleci_docker:18.06.1-dc-1.23.2-0
+  working_directory: ~/app
+
+build_docker: &build_docker
+  run:
+    name: Build Docker
+    command: |
+      export BRANCH_NO_SLASH=${CIRCLE_BRANCH//\//_}
+      docker-compose build
+
+test: &test
+  run:
+    name: Test
+    command: docker-compose run test
+
+version: 2
+jobs:
+  test-and-build-image:
+    <<: *docker-defaults
+    steps:
+      - checkout
+      - setup_remote_docker
+      - <<: *build_docker
+      - <<: *test
+
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
