@@ -1,3 +1,9 @@
+# $${\color{red}THIS\ REPO\ IS\ OBSOLETE\ (ARCHIVED\ ON\ 9/26/25)}$$
+
+New indexer: [go-ead-indexer](https://github.com/NYULibraries/go-ead-indexer)
+
+---
+
 # EadIndexer
 
 [![NYU](https://github.com/NYULibraries/nyulibraries_stylesheets/blob/master/app/assets/images/nyulibraries_stylesheets/nyu.png)](https://dev.library.nyu.edu)
